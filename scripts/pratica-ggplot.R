@@ -6,21 +6,29 @@
 ###
 
 
+
 # Pacotes:
 if (!require("pacman")) install.packages("pacman")
 
-# função que detecta se pacote está instalado e, se não estiver, faz a instalação
+# A função abaixo  detecta se pacote está instalado e, se não estiver, faz a instalação
 # caso já esteja instalado, ela carrega o pacote. substitui os passos de 
 # install.packages() e library()
 pacman::p_load(
-  tidyverse
+  tidyverse,
+  viridis, # Paleta acessível para daltônicos
+  ggsci, # Scientific journal color palettes
+  extrafont,
+  patchwork,
+  geobr,
+  sf
   )
 
-# Checar diretório: confira se script e banco de dados estão armazenados nos
-# locais adequados
-# Pode ser feito manualmente Session > Set working directory > Choose directory
+# Definir diretório:
+# Pode ser feito manualmente: Session > Set working directory > Choose directory
 # ou definindo um caminho com a função setwd(), exemplo:
 # setwd("C:/Users/NOTE-Letícia Lopes/OneDrive/Documentos/GitHub/workshopVisualizacao/scripts")
+
+
 
 # Carregar banco de dados:
 # Usaremos os dados dos artigo https://www.science.org/doi/10.1126/sciadv.abh2932
@@ -40,8 +48,12 @@ glimpse(dados)
 # Vamos entender o banco de dados:
 view(dados)
 
+
+
+
 # Vamos começar nosso primeiro gráfico
 ggplot()
+
 
 # Veremos, será que a perda de vegetação está associada ao tamanho da área?
 dados |> 
@@ -58,7 +70,7 @@ ggplot(dados, aes(x = area_km2, y = loss_veg_treatment)) +
   geom_point()
 
 
-#  Modificando o intervalo entre os valores do eixo (variável numérica)
+## Modificando o intervalo entre os valores do eixo (variável numérica)
 g1
 
 g1 +  
@@ -89,6 +101,9 @@ g1 + coord_cartesian(ylim = c(-1, 5000000000),
 g1 + scale_y_continuous(limits = c(-1, 5000000000))
 
 
+g1 + scale_x_continuous(expand = expansion(mult = c(0, 0.05)))
+
+
 ## Variáveis categóricas
 
 # g2 <- 
@@ -100,7 +115,7 @@ g1 + scale_y_continuous(limits = c(-1, 5000000000))
 
 
 ## Modificando os rótulos do eixo x (categórico)
-
+# Abaixo mudamos apenas o rótulo, não a ordem
 g2 + scale_x_discrete(labels = c("Amazônia",
                                  "Mata Atlântica",
                                  "Caatinga",
@@ -122,6 +137,7 @@ g2 + scale_x_discrete(limits = c("Cerrado",
 
 
 ## Outra opção: usando o pacote forcats (tidyverse)
+# podemos ordenar por uma variável numérica
 
 dados |> 
   group_by(biome) |> 
@@ -132,3 +148,109 @@ dados |>
   # Modificando o nome dos eixos:
   labs(x = element_blank(),
        y = "Diferença entre % \nde vegetação")
+
+
+## Modificando as cores
+
+dados |> 
+  ggplot(aes(x = area_km2, y = remaining_veg_treatment_initial)) +
+  geom_point(color = "darkred") +
+  geom_smooth(method = lm, color = "grey")
+
+g3 <- dados |> 
+  ggplot(aes(x = area_km2, y = remaining_veg_treatment_initial, 
+             color = gov_type)) +
+  geom_point() +
+  geom_smooth(method = lm)
+
+# Paleta de color
+?viridis::viridis
+viridis::viridis(4)
+
+g3 + scale_color_manual(values = c("#440154FF", "#31688EFF", "#35B779FF", "#FDE725FF"))
+
+g3 + scale_color_viridis_d(option = "magma")
+
+# Paletas do pacote ggsci
+# Dá para usar como scale_color ou scale_fill
+# scale_color_npg(): Nature Publishing Group color palettes
+# scale_color_aaas(): American Association for the Advancement of Science color palettes
+# scale_color_lancet(): Lancet journal color palettes
+# scale_color_jco(): Journal of Clinical Oncology color palettes
+# scale_color_tron(): This palette is inspired by the colors used in Tron Legacy. It is suitable for displaying data when using a dark theme.
+
+g3 + scale_color_npg()
+
+## Facet_wrap
+
+g3 + facet_wrap(~biome)
+
+
+## Modificando o tema
+
+g3 + theme_bw()
+g3 + theme_minimal()
+g3 + theme_classic()
+
+
+## Modificando as fontes
+# Fontes instaladas no meu notebook:
+extrafont::loadfonts(device = "win") 
+
+g3 + theme(
+  text = element_text(family = "Bookman Old Style")
+)
+
+
+## Modificando a legenda
+
+g3 + 
+  labs(color = "Tipo de área",
+       x = "Área (km²)",
+       y = "Vegetação natural inicial") +
+  theme(legend.position = "bottom")
+
+
+## Composição de figura com patchwork
+
+g1 + g2
+
+g1 / g3
+
+(g1 + g2) / g3
+
+## Salvando a figura final em alta resolução
+
+ggsave("img/fig1.png", width = 10, height = 5, dpi = 300)
+
+
+
+## Combinando o que aprendemos até aqui:
+
+dados |> 
+  ggplot(aes(x = log(area_km2), y = remaining_veg_treatment_initial, 
+             color = gov_type)) +
+  geom_point(size = 2) +
+  geom_smooth(method = lm, se = F) + 
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1,
+                                                    decimal.mark = ","),
+                     limits = c(0,1)) +
+  labs(x = "Log(Área em km²)",
+       y = "% vegetação nativa original",
+       color = "Tipo de Governança") +
+  scale_color_npg() +
+  facet_wrap(~ biome) +
+  theme_classic() +
+  theme(legend.position = "top")
+
+
+# Caso os pontos estejam pixelados, rodar o código abaixo
+trace(grDevices::png, quote({
+  if (missing(type) && missing(antialias)) {
+    type <- "cairo-png"
+    antialias <- "subpixel"
+  }
+}), print = FALSE)
+
+
+## Extra: Introdução a mapas com ggplot2
