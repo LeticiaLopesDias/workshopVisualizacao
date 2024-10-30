@@ -4,12 +4,12 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-Este material é referente ao workshop de Visualização de Dados com R, oferecido na
-presencialmente na Universidade Federal de Goiás em XX de 2024.
+Este material é referente ao workshop de Visualização de Dados com R, oferecido 
+presencialmente na Universidade Federal de Goiás em dezembro de 2024.
 
 ## Informações gerais
 
-Carga horária: 4h.
+Carga horária: 3h.
 
 Conteúdo:
 - Introdução à visualização de dados
