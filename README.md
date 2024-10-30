@@ -17,5 +17,4 @@ Conteúdo:
 - Lógica de camadas do ggplot2
 - Ajustes estéticos
 - Composição de figura com patchwork
-- Criando funções para padronizar gráficos
 - Extra: introdução a mapas com ggplot2
