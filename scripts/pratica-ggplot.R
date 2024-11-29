@@ -212,6 +212,24 @@ g1 +
 ggsave("img/fig1.png", width = 10, height = 5, dpi = 300)
 
 
+
+## Agora, vamos reproduzir os histogramas da Fig 1 do artigo
+dados |> 
+  ggplot() +
+  geom_histogram(aes(or), fill = "#2596be", bins = 15) +
+  geom_vline(aes(xintercept = 1), col = "red", linetype = "longdash") +
+  scale_x_continuous(transform = "log",
+                     n.breaks = 5,
+                     labels = scales::number_format(accuracy = 0.1)) +
+  scale_y_continuous(expand = expansion(mult = c(0,0.05))) +
+  labs(x = "Odds ratio of vegetation loss",
+       y = "Frequency") +
+  facet_wrap(~biome, scales = "free") +
+  theme_classic() +
+  theme(strip.background = element_blank())
+
+
+
 # Caso os pontos estejam pixelados, rodar o código abaixo
 # trace(grDevices::png, quote({
 #   if (missing(type) && missing(antialias)) {
