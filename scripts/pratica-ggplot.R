@@ -1,7 +1,7 @@
 ###
 # Workshop Visualização de Dados com R
 # Letícia Lopes (leticialssdias@gmail.com) 
-# novembro/2024
+# dezembro/2024
 # PPG Ecologia e Evolução/ UFG
 ###
 
@@ -119,7 +119,7 @@ dados |>
 ## Outra opção: usando o pacote forcats (tidyverse)
 # podemos ordenar por uma variável numérica
 
-# g1 <- 
+g1 <- 
   dados |> 
   group_by(biome) |> 
   summarise(perda_media = mean(loss_veg_treatment, na.rm = T)) |> 
@@ -139,7 +139,7 @@ dados |>
 ?viridis::viridis
 viridis::viridis(4)
 
-# g2 <- 
+g2 <- 
   dados |> 
   ggplot(aes(x = area_km2, y = remaining_veg_treatment_initial, 
              color = gov_type)) +
