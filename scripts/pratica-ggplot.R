@@ -6,7 +6,6 @@
 ###
 
 
-
 # Pacotes:
 if (!require("pacman")) install.packages("pacman")
 
@@ -33,70 +32,133 @@ pacman::p_load(
 # Carregar banco de dados:
 # Usaremos os dados dos artigo https://www.science.org/doi/10.1126/sciadv.abh2932
 
+read.csv() # Rbase
+read_csv() # tidyverse
+
 dados <- read_csv("dados/sciadv.abh2932_Data_file_S1.csv", 
                   locale = locale(encoding = "latin1"))
+dados
 dplyr::glimpse(dados)
+glimpse(dados)
 
 # Vamos entender o banco de dados:
 view(dados)
 unique(dados$gov_type)
 unique(dados$category)
+levels(dados$category)
+
+dados2 <- dados |> 
+  mutate(
+    category = as.factor(category),
+    gov_type = as.factor(gov_type)
+  )
+levels(dados2$gov_type)
+
+glimpse(dados2)
 
 
 # Vamos começar nosso primeiro gráfico
 ggplot()
 
 
-# Explorar se a perda de vegetação está associada ao tamanho da área
+# Explorar se a perda de vegetação está associada 
+# ao tamanho da área
+unique(dados$gov_type)
+
+dados$gov_type |> unique()
+
 dados |> 
-  ggplot() +
+  filter(gov_type == "State") |> 
+  ggplot() + 
   geom_point(aes(x = area_km2, y = loss_veg_treatment))
+
 
 # Essa forma de escrita é o mesmo que:
 ggplot(dados) +
   geom_point(aes(x = area_km2, y = loss_veg_treatment))
 
 # Ou:
-ggplot(dados, aes(x = area_km2, y = loss_veg_treatment)) +
-  geom_point()
+ggplot(dados, 
+       aes(x = area_km2, y = loss_veg_treatment)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+ggplot(dados) +
+  geom_point(aes(x = area_km2, y = loss_veg_treatment)) +
+  geom_vline(aes(xintercept = mean(area_km2)))
 
 
 ## Ajustes estéticos 
 dados |> 
   ggplot() +
-  geom_point(aes(x = area_km2, y = loss_veg_treatment),
+  geom_point(aes(x = area_km2, y = loss_veg_treatment), 
              size = 2,
              alpha = 0.5,
-             color = "darkgreen") +
-  scale_x_continuous(labels = scales::number_format(decimal.mark = ",",
-                                                    big.mark = ".",
-                                                    scale = 1e-6,
-                                                    suffix = " M"),
-                     breaks = seq(min(dados$area_km2, na.rm = T),
-                                  max(dados$area_km2, na.rm = T),
-                                  by = 10000),
-                     expand = expansion(mult = c(0.05, 0.05))
-                     
-                     ) +
-  scale_y_continuous(labels = scales::number_format(accuracy = 0.001,
-                                                    decimal.mark = ",",
-                                                    big.mark = "."),
-                     n.breaks = 6,
-                     limits = c(-1, 1)
-                     ) +
+             color = "darkgreen"
+             ) +
+  geom_label(aes(x = 10000, y = 0.8, label = "Texto")) +
+  scale_x_continuous(
+    labels = scales::number_format(big.mark = ".",
+                                    decimal.mark = ",",
+                                    scale = 1e-6,
+                                    suffix = " M",
+                                    accuracy = 0.01
+                                    ),
+    # breaks = seq(min(dados$area_km2, na.rm = T),
+    #              max(dados$area_km2, na.rm = T),
+    #              by = 10000)
+    n.breaks = 6,
+    expand = expansion(mult = c(0.02, 0.05))
+    ) +
+  scale_y_continuous(
+    labels = scales::number_format(big.mark = ".",
+                                   decimal.mark = ",",
+                                   accuracy = 0.01
+    ),
+    n.breaks = 6,
+    expand = expansion(mult = c(0.02, 0.05)),
+    limits = c(-1, 1)
+  ) +
   labs(
     x = "Área (km²)",
-    y = "% perda de vegetação",
-    title = "Área x Desmatamento"
+    y = "Perda de vegetação",
+    caption = "Exemplo"
   ) +
   theme_classic()
 
+  
 
 
 ## Variáveis categóricas
 dados |> 
   group_by(biome) |> 
-  summarise(perda_media = mean(loss_veg_treatment, na.rm = T)) |> 
+  summarise(
+    perda_media = mean(loss_veg_treatment,
+                       na.rm = T) 
+  ) |> 
+  ggplot() +
+  geom_col(aes(x = biome, y = perda_media)) +
+  scale_x_discrete(
+    labels = c("Amazônia",
+               "Mata Atlântica",
+               "Caatinga",
+               "Cerrado",
+               "Pampa",
+               "Pantanal"),
+    limits = c("Cerrado",
+                "Amazon",
+                "Pantanal",
+                "Atlantic Forest",
+                "Pampa",
+                "Caatinga")
+                )
+
+
+dados |> 
+  group_by(biome) |> 
+  summarise(
+    perda_media = mean(loss_veg_treatment, 
+                       na.rm = T)) |> 
   ggplot() +
   geom_col(aes(x = biome, y = perda_media)) +
   # Abaixo, mudo apenas o rótulo
@@ -113,31 +175,35 @@ dados |>
                               "Atlantic Forest",
                               "Pampa",
                               "Caatinga"))
-  
-
-
 ## Outra opção: usando o pacote forcats (tidyverse)
 # podemos ordenar por uma variável numérica
 
-g1 <- 
-  dados |> 
+g1 <- dados |> 
   group_by(biome) |> 
-  summarise(perda_media = mean(loss_veg_treatment, na.rm = T)) |> 
-  mutate(biome = fct_reorder(biome, perda_media)) |> 
+  summarise(
+    perda_media = mean(loss_veg_treatment, 
+                       na.rm = T)) |> 
+  mutate(biome = fct_reorder(biome, 
+                             perda_media)) |> 
   ggplot() +
   geom_col(aes(x = biome, y = perda_media),
-           fill = "brown") +
+           fill = "darkred"
+           ) +
   labs(x = element_blank(),
        y = "Diferença entre % \nde vegetação") +
-  theme_classic()
-  
+  theme_test()
 
+g1 
+  
 
 ## Modificando as cores
 
 # Paleta de color
 ?viridis::viridis
 viridis::viridis(4)
+[1] "#440154FF" "#31688EFF"
+[3] "#35B779FF" "#FDE725FF"
+
 
 g2 <- 
   dados |> 
@@ -145,13 +211,11 @@ g2 <-
              color = gov_type)) +
   geom_point() +
   geom_smooth(method = lm) +
-  # Inserindo valors manualmente:
-  scale_color_manual(
-    values = c("#440154FF", "#31688EFF", "#35B779FF", "#FDE725FF")
-    )
-  # Usando uma função de paleta pronta:
-  # scale_color_viridis_d(option = "magma")
-  # scale_color_npg()
+  # scale_color_manual(
+  #     values = c("#440154FF", "#31688EFF", "#35B779FF", "#FDE725FF")
+  #     )
+    # scale_color_viridis_d(option = "turbo") +
+    scale_color_npg()
 
 
 # Paletas do pacote ggsci
@@ -179,16 +243,32 @@ dados |>
   theme_bw() +
   # theme_minimal() +
   # theme_classic() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        axis.title = element_text(size = 15))
 
 
 ## Composição de figura com patchwork
 
+g1
+g2
+
 g1 + g2
+g1 / g2
 
-g1 / g2 + plot_annotation(tag_levels = 'A')
+g1 / g2 + 
+  plot_annotation(tag_levels = '1')
 
-(g1 + g2) / g2
+(g1 + g2) / g2 + plot_annotation(tag_levels = 'A')
+
+
+## Salvando a figura final em alta resolução
+
+ggsave("img/fig1.png",
+       width = 10, height = 10, 
+       dpi = 600)
+
+ggsave("img/fig1.svg",
+       width = 10, height = 10)
 
 
 
@@ -207,9 +287,6 @@ g1 +
   theme(text = element_text(family = "Symbol"))
 
 
-## Salvando a figura final em alta resolução
-
-ggsave("img/fig1.png", width = 10, height = 5, dpi = 300)
 
 
 
@@ -231,12 +308,12 @@ dados |>
 
 
 # Caso os pontos estejam pixelados, rodar o código abaixo
-# trace(grDevices::png, quote({
-#   if (missing(type) && missing(antialias)) {
-#     type <- "cairo-png"
-#     antialias <- "subpixel"
-#   }
-# }), print = FALSE)
+trace(grDevices::png, quote({
+  if (missing(type) && missing(antialias)) {
+    type <- "cairo-png"
+    antialias <- "subpixel"
+  }
+}), print = FALSE)
 
 
 
